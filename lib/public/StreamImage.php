@@ -81,11 +81,11 @@ class StreamImage implements IStreamImage {
 	}
 
 	public function show($mimeType = null) {
-		return -1;
+		return false;
 	}
 
 	public function save($filePath = null, $mimeType = null) {
-		return -1;
+		return false;
 	}
 
 	public function resource() {
@@ -117,6 +117,7 @@ class StreamImage implements IStreamImage {
 	}
 
 	public function centerCrop($size = 0) {
+		return false;
 	}
 
 	public function crop(int $x, int $y, int $w, int $h): bool {

@@ -67,7 +67,11 @@ class Imaginary extends ProviderV2 {
 			return null;
 		}
 
-		$baseUrl = $this->config->getSystemValueString('preview_imaginary_url', 'http://previews_hpb:8088');
+		$baseUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
+		if ($baseUrl === 'invalid') {
+			$this->logger->error('Imaginary preview provider is enabled, but no url is configured. Please provide the url of your imaginary server to the \'preview_imaginary_url\' config variable.');
+			return null;
+		}
 		$baseUrl = rtrim($baseUrl, '/');
 
 		// Object store
@@ -87,7 +91,12 @@ class Imaginary extends ProviderV2 {
 			return null;
 		}
 
-		$image = new StreamImage($response->getBody(), 'image/jpeg', $maxX, $maxY);
+		if ($response->getHeader('X-Image-Width') && $response->getHeader('X-Image-Height')) {
+			$maxX = (int)$response->getHeader('X-Image-Width');
+			$maxY = (int)$response->getHeader('X-Image-Height');
+		}
+
+		$image = new StreamImage($response->getBody(), $response->getHeader('Content-Type'), $maxX, $maxY);
 		return $image->valid() ? $image : null;
 	}
 }
