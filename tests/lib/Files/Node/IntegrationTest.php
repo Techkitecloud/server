@@ -12,6 +12,7 @@ use OC\Files\Node\Root;
 use OC\Files\Storage\Temporary;
 use OC\Files\View;
 use OC\User\User;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ILogger;
 use OCP\IUserManager;
 
@@ -55,7 +56,8 @@ class IntegrationTest extends \Test\TestCase {
 			$user,
 			\OC::$server->getUserMountCache(),
 			$this->createMock(ILogger::class),
-			$this->createMock(IUserManager::class)
+			$this->createMock(IUserManager::class),
+			$this->createMock(IEventDispatcher::class)
 		);
 		$storage = new Temporary([]);
 		$subStorage = new Temporary([]);

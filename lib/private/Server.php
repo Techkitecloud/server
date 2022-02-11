@@ -423,7 +423,8 @@ class Server extends ServerContainer implements IServerContainer {
 				null,
 				$c->get(IUserMountCache::class),
 				$this->get(ILogger::class),
-				$this->get(IUserManager::class)
+				$this->get(IUserManager::class),
+				$this->get(IEventDispatcher::class),
 			);
 
 			$previewConnector = new \OC\Preview\WatcherConnector(

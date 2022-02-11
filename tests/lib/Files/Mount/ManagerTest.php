@@ -8,7 +8,12 @@
 
 namespace Test\Files\Mount;
 
+use OC\Files\Config\MountProviderCollection;
 use OC\Files\Storage\Temporary;
+use OCP\Diagnostics\IEventLogger;
+use OCP\EventDispatcher\IEventDispatcher;
+use OCP\Files\Config\IMountProviderCollection;
+use OCP\IUserSession;
 
 class LongId extends Temporary {
 	public function getId() {
@@ -24,7 +29,12 @@ class ManagerTest extends \Test\TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		$this->manager = new \OC\Files\Mount\Manager();
+		$this->manager = new \OC\Files\Mount\Manager(
+			$this->createMock(IEventLogger::class),
+			$this->createMock(IMountProviderCollection::class),
+			$this->createMock(IUserSession::class),
+			$this->createMock(IEventDispatcher::class),
+		);
 	}
 
 	public function testFind() {

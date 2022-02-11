@@ -32,6 +32,7 @@ use OC\Cache\CappedMemoryCache;
 use OC\Files\Filesystem;
 use OC\Files\SetupManager;
 use OCP\Diagnostics\IEventLogger;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Config\IMountProviderCollection;
 use OCP\Files\Mount\IMountManager;
 use OCP\Files\Mount\IMountPoint;
@@ -47,11 +48,12 @@ class Manager implements IMountManager {
 	public function __construct(
 		IEventLogger $eventLogger,
 		IMountProviderCollection $mountProviderCollection,
-		IUserSession $userSession
+		IUserSession $userSession,
+		IEventDispatcher $eventDispatcher
 	) {
 		$this->pathCache = new CappedMemoryCache();
 		$this->inPathCache = new CappedMemoryCache();
-		$this->setupManager = new SetupManager($eventLogger, $mountProviderCollection, $this, $userSession);
+		$this->setupManager = new SetupManager($eventLogger, $mountProviderCollection, $this, $userSession, $eventDispatcher);
 	}
 
 	/**

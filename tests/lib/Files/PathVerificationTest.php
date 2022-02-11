@@ -7,6 +7,7 @@
 
 namespace Test\Files;
 
+use OC\Files\SetupManager;
 use OC\Files\Storage\Local;
 use OC\Files\View;
 use OCP\Files\InvalidPathException;
@@ -27,10 +28,13 @@ class PathVerificationTest extends \Test\TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
+		/** @var SetupManager $setupManager */
+		$setupManager = \OC::$server->get(SetupManager::class);
+		$setupManager->setupRoot();
 		$this->view = new View();
 	}
 
-	
+
 	public function testPathVerificationFileNameTooLong() {
 		$this->expectException(\OCP\Files\InvalidPathException::class);
 		$this->expectExceptionMessage('File name is too long');

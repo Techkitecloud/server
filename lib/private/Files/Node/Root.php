@@ -37,11 +37,14 @@ use OC\Files\Mount\Manager;
 use OC\Files\Mount\MountPoint;
 use OC\Hooks\PublicEmitter;
 use OC\User\NoUserException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Config\IUserMountCache;
+use OCP\Files\Events\Node\FilesystemTearedDownEvent;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\ILogger;
+use OCP\IUser;
 use OCP\IUserManager;
 
 /**
@@ -64,20 +67,14 @@ use OCP\IUserManager;
  * @package OC\Files\Node
  */
 class Root extends Folder implements IRootFolder {
-	/** @var Manager */
-	private $mountManager;
-	/** @var PublicEmitter */
-	private $emitter;
-	/** @var null|\OC\User\User */
-	private $user;
-	/** @var CappedMemoryCache */
-	private $userFolderCache;
-	/** @var IUserMountCache */
-	private $userMountCache;
-	/** @var ILogger */
-	private $logger;
-	/** @var IUserManager */
-	private $userManager;
+	private Manager $mountManager;
+	private PublicEmitter $emitter;
+	private ?IUser $user;
+	private CappedMemoryCache $userFolderCache;
+	private IUserMountCache $userMountCache;
+	private ILogger $logger;
+	private IUserManager $userManager;
+	private IEventDispatcher $eventDispatcher;
 
 	/**
 	 * @param \OC\Files\Mount\Manager $manager
@@ -87,12 +84,15 @@ class Root extends Folder implements IRootFolder {
 	 * @param ILogger $logger
 	 * @param IUserManager $userManager
 	 */
-	public function __construct($manager,
+	public function __construct(
+		$manager,
 		$view,
 		$user,
-								IUserMountCache $userMountCache,
-								ILogger $logger,
-								IUserManager $userManager) {
+		IUserMountCache $userMountCache,
+		ILogger $logger,
+		IUserManager $userManager,
+		IEventDispatcher $eventDispatcher
+	) {
 		parent::__construct($this, $view, '');
 		$this->mountManager = $manager;
 		$this->user = $user;
@@ -101,6 +101,9 @@ class Root extends Folder implements IRootFolder {
 		$this->userMountCache = $userMountCache;
 		$this->logger = $logger;
 		$this->userManager = $userManager;
+		$eventDispatcher->addListener(FilesystemTearedDownEvent::class, function () {
+			$this->userFolderCache = new CappedMemoryCache();
+		});
 	}
 
 	/**
@@ -391,10 +394,6 @@ class Root extends Folder implements IRootFolder {
 		}
 
 		return $this->userFolderCache->get($userId);
-	}
-
-	public function clearCache() {
-		$this->userFolderCache = new CappedMemoryCache();
 	}
 
 	public function getUserMountCache() {
