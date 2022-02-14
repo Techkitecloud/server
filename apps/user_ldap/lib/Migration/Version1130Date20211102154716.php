@@ -28,6 +28,7 @@ namespace OCA\User_LDAP\Migration;
 
 use Closure;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\Exception\ConstraintViolationException;
 use Doctrine\DBAL\Types\Types;
 use Generator;
@@ -248,9 +249,10 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 			->from($table)
 			->where($select->expr()->eq('directory_uuid', $select->createNamedParameter($uuid)));
 
+		/** @var Statement $result */
 		$result = $select->execute();
 		$idList = [];
-		while ($id = $result->fetchOne()) {
+		while ($id = $result->fetchColumn()) {
 			$idList[] = $id;
 		}
 		$result->closeCursor();
@@ -268,8 +270,9 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 			->groupBy('directory_uuid')
 			->having($select->expr()->gt($select->func()->count('owncloud_name'), $select->createNamedParameter(1)));
 
+		/** @var Statement $result */
 		$result = $select->execute();
-		while ($uuid = $result->fetchOne()) {
+		while ($uuid = $result->fetchColumn()) {
 			yield $uuid;
 		}
 		$result->closeCursor();
