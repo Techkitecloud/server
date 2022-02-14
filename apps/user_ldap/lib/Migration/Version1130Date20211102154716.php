@@ -27,8 +27,10 @@ declare(strict_types=1);
 namespace OCA\User_LDAP\Migration;
 
 use Closure;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\ConstraintViolationException;
 use Doctrine\DBAL\Types\Types;
-use OCP\DB\Exception;
+use Generator;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
@@ -65,7 +67,7 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 			// should be empty.
 			// TRUNCATE is not available from Query Builder, but faster than DELETE FROM.
 			$sql = $this->dbc->getDatabasePlatform()->getTruncateTableSQL('ldap_group_mapping_backup', false);
-			$this->dbc->executeStatement($sql);
+			$this->dbc->executeUpdate($sql);
 		}
 	}
 
@@ -159,7 +161,7 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 			$update->setParameter('dn_hash', $dnHash);
 			try {
 				$update->execute();
-			} catch (Exception $e) {
+			} catch (DBALException $e) {
 				$this->logger->error('Failed to add hash "{dnHash}" ("{name}" of {table})',
 					[
 						'app' => 'user_ldap',
@@ -191,7 +193,7 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws DBALException
 	 */
 	protected function processDuplicateUUIDs(string $table): void {
 		$uuids = $this->getDuplicatedUuids($table);
@@ -203,7 +205,7 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws DBALException
 	 */
 	protected function invalidateUuids(string $table, array $idList): void {
 		$update = $this->dbc->getQueryBuilder();
@@ -223,12 +225,12 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 						'nid' => $nextcloudId,
 					]
 				);
-			} catch (Exception $e) {
+			} catch (DBALException $e) {
 				// Catch possible, but unlikely duplications if new invalidated errors.
 				// There is the theoretical chance of an infinity loop is, when
 				// the constraint violation has a different background. I cannot
 				// think of one at the moment.
-				if ($e->getReason() !== Exception::REASON_CONSTRAINT_VIOLATION) {
+				if (!$e instanceof ConstraintViolationException) {
 					throw $e;
 				}
 				$idList[] = $nextcloudId;
@@ -237,7 +239,7 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 	}
 
 	/**
-	 * @throws \OCP\DB\Exception
+	 * @throws DBALException
 	 * @return array<string>
 	 */
 	protected function getNextcloudIdsByUuid(string $table, string $uuid): array {
@@ -257,7 +259,7 @@ class Version1130Date20211102154716 extends SimpleMigrationStep {
 
 	/**
 	 * @return Generator<string>
-	 * @throws \OCP\DB\Exception
+	 * @throws DBALException
 	 */
 	protected function getDuplicatedUuids(string $table): Generator {
 		$select = $this->dbc->getQueryBuilder();
